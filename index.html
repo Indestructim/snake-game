@@ -1,466 +1,514 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="fr">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2575.6">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #2c3e50;
+            font-family: Arial, sans-serif;
+        }
+        
+        .game-container {
+            text-align: center;
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .score {
+            color: #ecf0f1;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        #gameCanvas {
+            border: 2px solid #ecf0f1;
+            background: linear-gradient(45deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        }
+        
+        .controls {
+            color: #ecf0f1;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .game-over {
+            color: #e74c3c;
+            font-size: 20px;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-<p class="p1">&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ===== CONFIGURATION DU JEU =====</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const canvas = document.getElementById('gameCanvas');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const ctx = canvas.getContext('2d');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const scoreElement = document.getElementById('score');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const gameOverElement = document.getElementById('gameOver');</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Taille de chaque case de la grille</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const gridSize = 20;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Nombre de cases sur chaque axe</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const tileCount = canvas.width / gridSize;</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ===== VARIABLES DU JEU =====</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let snake = [</p>
-<p class="p1"><span class="Apple-converted-space">        </span>{x: 10, y: 10} // Position initiale du serpent</p>
-<p class="p1"><span class="Apple-converted-space">    </span>];</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>let food = {};</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let bonusFood = null; // Nourriture bonus temporaire</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let bonusFoodTimer = 0; // Timer pour la nourriture bonus</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let nextBonusTime = Math.random() * 10000 + 5000; // Prochaine apparition (5-15s)</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>let dx = 0; // Déplacement horizontal</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let dy = 0; // Déplacement vertical</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let score = 0;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let gameRunning = true;</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ===== FONCTIONS PRINCIPALES =====</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Fonction pour dessiner un segment de serpent avec effet 3D</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function drawSnakeSegment(x, y, color, isHead = false) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const pixelX = x * gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const pixelY = y * gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const size = gridSize - 2;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const radius = size / 4;</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Ombre portée</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.roundRect(pixelX + 2, pixelY + 2, size, size, radius);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Corps principal avec dégradé</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const gradient = ctx.createRadialGradient(</p>
-<p class="p1"><span class="Apple-converted-space">            </span>pixelX + size/3, pixelY + size/3, 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>pixelX + size/2, pixelY + size/2, size/2</p>
-<p class="p1"><span class="Apple-converted-space">        </span>);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gradient.addColorStop(0, color);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gradient.addColorStop(1, darkenColor(color, 0.4));</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = gradient;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.roundRect(pixelX, pixelY, size, size, radius);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Reflet brillant</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const highlight = ctx.createRadialGradient(</p>
-<p class="p1"><span class="Apple-converted-space">            </span>pixelX + size/4, pixelY + size/4, 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>pixelX + size/4, pixelY + size/4, size/3</p>
-<p class="p1"><span class="Apple-converted-space">        </span>);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>highlight.addColorStop(0, 'rgba(255, 255, 255, 0.6)');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = highlight;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.roundRect(pixelX, pixelY, size, size, radius);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Yeux pour la tête</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (isHead) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.fillStyle = '#2c3e50';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const eyeSize = 3;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const eyeOffset = size/4;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Œil gauche</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.arc(pixelX + eyeOffset, pixelY + eyeOffset, eyeSize, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Œil droit</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.arc(pixelX + size - eyeOffset, pixelY + eyeOffset, eyeSize, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Reflets dans les yeux</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.fillStyle = 'white';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.arc(pixelX + eyeOffset + 1, pixelY + eyeOffset - 1, 1, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.arc(pixelX + size - eyeOffset + 1, pixelY + eyeOffset - 1, 1, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.fill();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Fonction pour dessiner la nourriture bonus avec effet spécial</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function drawBonusFood(x, y, pulseEffect = 0) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const pixelX = x * gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const pixelY = y * gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const size = gridSize - 2;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const radius = size / 2;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const pulse = Math.sin(pulseEffect) * 2; // Effet de pulsation</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Aura brillante autour</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const auraGradient = ctx.createRadialGradient(</p>
-<p class="p1"><span class="Apple-converted-space">            </span>pixelX + size/2, pixelY + size/2, 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>pixelX + size/2, pixelY + size/2, radius + 8 + pulse</p>
-<p class="p1"><span class="Apple-converted-space">        </span>);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>auraGradient.addColorStop(0, 'rgba(255, 215, 0, 0.6)');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>auraGradient.addColorStop(0.7, 'rgba(255, 215, 0, 0.3)');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>auraGradient.addColorStop(1, 'rgba(255, 215, 0, 0)');</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = auraGradient;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.arc(pixelX + size/2, pixelY + size/2, radius + 8 + pulse, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Ombre</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.arc(pixelX + size/2 + 2, pixelY + size/2 + 2, radius + pulse/2, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Corps principal - forme d'étoile/diamant</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const centerX = pixelX + size/2;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const centerY = pixelY + size/2;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const starRadius = radius + pulse/2;</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.save();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.translate(centerX, centerY);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.rotate(pulseEffect / 4); // Rotation lente</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Gradient doré</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, starRadius);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gradient.addColorStop(0, '#FFD700'); // Or brillant</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gradient.addColorStop(0.6, '#FFA500'); // Orange</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gradient.addColorStop(1, '#FF8C00'); // Orange foncé</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = gradient;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>for (let i = 0; i &lt; 8; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const angle = (i * Math.PI) / 4;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const r = i % 2 === 0 ? starRadius : starRadius * 0.6;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const x = Math.cos(angle) * r;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const y = Math.sin(angle) * r;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (i === 0) ctx.moveTo(x, y);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>else ctx.lineTo(x, y);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.closePath();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Reflet central</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const highlight = ctx.createRadialGradient(0, 0, 0, 0, 0, starRadius/2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>highlight.addColorStop(0, 'rgba(255, 255, 255, 0.9)');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = highlight;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.arc(0, 0, starRadius/2, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.restore();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function drawFood(x, y) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const pixelX = x * gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const pixelY = y * gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const size = gridSize - 2;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const radius = size / 2;</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Ombre</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.arc(pixelX + size/2 + 2, pixelY + size/2 + 2, radius, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Corps principal</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const gradient = ctx.createRadialGradient(</p>
-<p class="p1"><span class="Apple-converted-space">            </span>pixelX + size/3, pixelY + size/3, 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>pixelX + size/2, pixelY + size/2, radius</p>
-<p class="p1"><span class="Apple-converted-space">        </span>);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gradient.addColorStop(0, '#e74c3c');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gradient.addColorStop(1, '#c0392b');</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = gradient;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.arc(pixelX + size/2, pixelY + size/2, radius, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Reflet</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const highlight = ctx.createRadialGradient(</p>
-<p class="p1"><span class="Apple-converted-space">            </span>pixelX + size/3, pixelY + size/3, 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>pixelX + size/3, pixelY + size/3, radius/2</p>
-<p class="p1"><span class="Apple-converted-space">        </span>);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>highlight.addColorStop(0, 'rgba(255, 255, 255, 0.8)');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = highlight;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.arc(pixelX + size/2, pixelY + size/2, radius, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// CORRECTION : Fonction utilitaire plus robuste pour assombrir une couleur</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function darkenColor(color, factor) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let c = color.substring(1);<span class="Apple-converted-space">      </span>// Enlever le #</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let num = parseInt(c, 16);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let r = Math.max(0, Math.floor((num &gt;&gt; 16) * (1 - factor)));</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let g = Math.max(0, Math.floor(((num &gt;&gt; 8) &amp; 0x00FF) * (1 - factor)));</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let b = Math.max(0, Math.floor((num &amp; 0x0000FF) * (1 - factor)));</p>
-<p class="p1"><span class="Apple-converted-space">        </span>return "#" + ((1 &lt;&lt; 24) + (r &lt;&lt; 16) + (g &lt;&lt; 8) + b).toString(16).slice(1);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Fonction pour dessiner le fond texturé</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function drawBackground() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Dégradé de base</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gradient.addColorStop(0, '#0f2027');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gradient.addColorStop(0.5, '#203a43');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gradient.addColorStop(1, '#2c5364');</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = gradient;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillRect(0, 0, canvas.width, canvas.height);</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Grille subtile</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.lineWidth = 0.5;</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>for (let x = 0; x &lt;= canvas.width; x += gridSize) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.moveTo(x, 0);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.lineTo(x, canvas.height);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.stroke();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>for (let y = 0; y &lt;= canvas.height; y += gridSize) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.moveTo(0, y);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.lineTo(canvas.width, y);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.stroke();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Points lumineux aléatoires pour l'effet starfield</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>for (let i = 0; i &lt; 30; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const x = Math.random() * canvas.width;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const y = Math.random() * canvas.height;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const size = Math.random() * 1.5 + 0.5;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.arc(x, y, size, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.fill();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Effet de vignette (assombrit les bords)</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const vignetteGradient = ctx.createRadialGradient(</p>
-<p class="p1"><span class="Apple-converted-space">            </span>canvas.width/2, canvas.height/2, 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>canvas.width/2, canvas.height/2, canvas.width/2</p>
-<p class="p1"><span class="Apple-converted-space">        </span>);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vignetteGradient.addColorStop(0.7, 'rgba(0, 0, 0, 0)');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vignetteGradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = vignetteGradient;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillRect(0, 0, canvas.width, canvas.height);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function generateFood() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>food = {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>x: Math.floor(Math.random() * tileCount),</p>
-<p class="p1"><span class="Apple-converted-space">            </span>y: Math.floor(Math.random() * tileCount)</p>
-<p class="p1"><span class="Apple-converted-space">        </span>};</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Vérifier que la nourriture n'apparaît pas sur le serpent</p>
-<p class="p1"><span class="Apple-converted-space">        </span>for (let segment of snake) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (segment.x === food.x &amp;&amp; segment.y === food.y) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>generateFood(); // Régénérer si collision</p>
-<p class="p1"><span class="Apple-converted-space">                </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Fonction pour dessiner tous les éléments du jeu</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function draw() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Dessiner le fond texturé</p>
-<p class="p1"><span class="Apple-converted-space">        </span>drawBackground();</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Dessiner le corps du serpent</p>
-<p class="p1"><span class="Apple-converted-space">        </span>for (let i = snake.length - 1; i &gt; 0; i--) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>drawSnakeSegment(snake[i].x, snake[i].y, '#27ae60', false);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Dessiner la tête du serpent</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (snake.length &gt; 0) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>drawSnakeSegment(snake[0].x, snake[0].y, '#2ecc71', true);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Dessiner la nourriture normale</p>
-<p class="p1"><span class="Apple-converted-space">        </span>drawFood(food.x, food.y);</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Dessiner la nourriture bonus si elle existe</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (bonusFood) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const pulseEffect = (Date.now() - bonusFoodTimer) / 100; // Animation de pulsation</p>
-<p class="p1"><span class="Apple-converted-space">            </span>drawBonusFood(bonusFood.x, bonusFood.y, pulseEffect);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Fonction pour déplacer le serpent</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function moveSnake() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (!gameRunning) return;</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Ne pas bouger si aucune direction n'est définie</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (dx === 0 &amp;&amp; dy === 0) return;</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Créer une nouvelle tête basée sur la direction</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const head = {x: snake[0].x + dx, y: snake[0].y + dy};</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Vérifier les collisions avec les murs</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (head.x &lt; 0 || head.x &gt;= tileCount || head.y &lt; 0 || head.y &gt;= tileCount) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gameOver();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Vérifier les collisions avec le corps du serpent</p>
-<p class="p1"><span class="Apple-converted-space">        </span>for (let segment of snake) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (head.x === segment.x &amp;&amp; head.y === segment.y) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>gameOver();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Ajouter la nouvelle tête</p>
-<p class="p1"><span class="Apple-converted-space">        </span>snake.unshift(head);</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Vérifier si le serpent a mangé la nourriture normale</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (head.x === food.x &amp;&amp; head.y === food.y) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>score += 10;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>scoreElement.textContent = score;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>generateFood();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Vérifier si le serpent a mangé la nourriture bonus</p>
-<p class="p1"><span class="Apple-converted-space">        </span>else if (bonusFood &amp;&amp; head.x === bonusFood.x &amp;&amp; head.y === bonusFood.y) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>score += 40;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>scoreElement.textContent = score;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>bonusFood = null; // Faire disparaître la nourriture bonus</p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Ne pas enlever la queue car le serpent a mangé</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>else {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Enlever la queue si aucune nourriture mangée</p>
-<p class="p1"><span class="Apple-converted-space">            </span>snake.pop();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Fonction appelée quand le jeu se termine</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function gameOver() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gameRunning = false;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gameOverElement.style.display = 'block';</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Fonction pour redémarrer le jeu</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function resetGame() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>snake = [{x: 10, y: 10}];</p>
-<p class="p1"><span class="Apple-converted-space">        </span>dx = 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>dy = 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>score = 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>scoreElement.textContent = score;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gameRunning = true;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gameOverElement.style.display = 'none';</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Réinitialiser la nourriture bonus</p>
-<p class="p1"><span class="Apple-converted-space">        </span>bonusFood = null;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>bonusFoodTimer = 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>nextBonusTime = Date.now() + Math.random() * 10000 + 5000;</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>generateFood();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// AJOUT : La fonction manquante pour gérer la nourriture bonus</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function updateBonusFood() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (!gameRunning) return;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>const now = Date.now();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Faire disparaître la nourriture bonus si elle est là depuis trop longtemps (ex: 7 secondes)</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (bonusFood &amp;&amp; (now - bonusFoodTimer &gt; 7000)) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>bonusFood = null;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Faire apparaître une nouvelle nourriture bonus</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (!bonusFood &amp;&amp; now &gt; nextBonusTime) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>bonusFood = {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>x: Math.floor(Math.random() * tileCount),</p>
-<p class="p1"><span class="Apple-converted-space">                </span>y: Math.floor(Math.random() * tileCount)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>};</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// S'assurer qu'elle n'apparaît pas sur le serpent ou la nourriture normale</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let onSnake = snake.some(segment =&gt; segment.x === bonusFood.x &amp;&amp; segment.y === bonusFood.y);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let onFood = bonusFood.x === food.x &amp;&amp; bonusFood.y === food.y;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (onSnake || onFood) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>bonusFood = null; // Annuler l'apparition</p>
-<p class="p1"><span class="Apple-converted-space">                </span>nextBonusTime = now + 1000; // Tenter à nouveau dans 1 seconde</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>bonusFoodTimer = now; // Démarrer le chrono de la nourriture bonus</p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Définir le temps pour la prochaine apparition</p>
-<p class="p1"><span class="Apple-converted-space">                </span>nextBonusTime = now + Math.random() * 10000 + 5000; // Prochaine dans 5-15s</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ===== GESTION DES CONTRÔLES =====</p>
-<p class="p1"><span class="Apple-converted-space">    </span>document.addEventListener('keydown', function(e) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (!gameRunning &amp;&amp; e.code === 'Space') {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>resetGame();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (!gameRunning) return;</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Empêcher le serpent de faire demi-tour</p>
-<p class="p1"><span class="Apple-converted-space">        </span>switch(e.code) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>case 'ArrowUp':</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (dy !== 1) { dx = 0; dy = -1; }</p>
-<p class="p1"><span class="Apple-converted-space">                </span>break;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>case 'ArrowDown':</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (dy !== -1) { dx = 0; dy = 1; }</p>
-<p class="p1"><span class="Apple-converted-space">                </span>break;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>case 'ArrowLeft':</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (dx !== 1) { dx = -1; dy = 0; }</p>
-<p class="p1"><span class="Apple-converted-space">                </span>break;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>case 'ArrowRight':</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (dx !== -1) { dx = 1; dy = 0; }</p>
-<p class="p1"><span class="Apple-converted-space">                </span>break;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ===== BOUCLE DE JEU PRINCIPALE =====</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function gameLoop() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>updateBonusFood(); // Gérer l'apparition/disparition de la nourriture bonus</p>
-<p class="p1"><span class="Apple-converted-space">        </span>moveSnake();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>draw();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ===== INITIALISATION =====</p>
-<p class="p1"><span class="Apple-converted-space">    </span>generateFood();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>nextBonusTime = Date.now() + Math.random() * 10000 + 5000; // Premier bonus dans 5-15s</p>
-<p class="p1"><span class="Apple-converted-space">    </span>draw();</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Démarrer la boucle de jeu (150ms = vitesse du jeu)</p>
-<p class="p1"><span class="Apple-converted-space">    </span>setInterval(gameLoop, 150);</p>
-<p class="p1">&lt;/script&gt;</p>
+    <div class="game-container">
+        <div class="score">Score: <span id="score">0</span></div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div class="controls">
+            Utilisez les flèches directionnelles pour jouer<br>
+            Appuyez sur ESPACE pour recommencer
+        </div>
+        <div id="gameOver" class="game-over" style="display: none;">
+            Game Over! Appuyez sur ESPACE pour rejouer
+        </div>
+    </div>
+
+<script>
+    // ===== CONFIGURATION DU JEU =====
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreElement = document.getElementById('score');
+    const gameOverElement = document.getElementById('gameOver');
+    
+    // Taille de chaque case de la grille
+    const gridSize = 20;
+    // Nombre de cases sur chaque axe
+    const tileCount = canvas.width / gridSize;
+    
+    // ===== VARIABLES DU JEU =====
+    let snake = [
+        {x: 10, y: 10} // Position initiale du serpent
+    ];
+    
+    let food = {};
+    let bonusFood = null; // Nourriture bonus temporaire
+    let bonusFoodTimer = 0; // Timer pour la nourriture bonus
+    let nextBonusTime = Math.random() * 10000 + 5000; // Prochaine apparition (5-15s)
+    
+    let dx = 0; // Déplacement horizontal
+    let dy = 0; // Déplacement vertical
+    let score = 0;
+    let gameRunning = true;
+    
+    // ===== FONCTIONS PRINCIPALES =====
+    
+    // Fonction pour dessiner un segment de serpent avec effet 3D
+    function drawSnakeSegment(x, y, color, isHead = false) {
+        const pixelX = x * gridSize;
+        const pixelY = y * gridSize;
+        const size = gridSize - 2;
+        const radius = size / 4;
+        
+        // Ombre portée
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.roundRect(pixelX + 2, pixelY + 2, size, size, radius);
+        ctx.fill();
+        
+        // Corps principal avec dégradé
+        const gradient = ctx.createRadialGradient(
+            pixelX + size/3, pixelY + size/3, 0,
+            pixelX + size/2, pixelY + size/2, size/2
+        );
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(1, darkenColor(color, 0.4));
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.roundRect(pixelX, pixelY, size, size, radius);
+        ctx.fill();
+        
+        // Reflet brillant
+        const highlight = ctx.createRadialGradient(
+            pixelX + size/4, pixelY + size/4, 0,
+            pixelX + size/4, pixelY + size/4, size/3
+        );
+        highlight.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+        highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        ctx.fillStyle = highlight;
+        ctx.beginPath();
+        ctx.roundRect(pixelX, pixelY, size, size, radius);
+        ctx.fill();
+        
+        // Yeux pour la tête
+        if (isHead) {
+            ctx.fillStyle = '#2c3e50';
+            const eyeSize = 3;
+            const eyeOffset = size/4;
+            
+            // Œil gauche
+            ctx.beginPath();
+            ctx.arc(pixelX + eyeOffset, pixelY + eyeOffset, eyeSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Œil droit
+            ctx.beginPath();
+            ctx.arc(pixelX + size - eyeOffset, pixelY + eyeOffset, eyeSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Reflets dans les yeux
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(pixelX + eyeOffset + 1, pixelY + eyeOffset - 1, 1, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(pixelX + size - eyeOffset + 1, pixelY + eyeOffset - 1, 1, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    // Fonction pour dessiner la nourriture bonus avec effet spécial
+    function drawBonusFood(x, y, pulseEffect = 0) {
+        const pixelX = x * gridSize;
+        const pixelY = y * gridSize;
+        const size = gridSize - 2;
+        const radius = size / 2;
+        const pulse = Math.sin(pulseEffect) * 2; // Effet de pulsation
+        
+        // Aura brillante autour
+        const auraGradient = ctx.createRadialGradient(
+            pixelX + size/2, pixelY + size/2, 0,
+            pixelX + size/2, pixelY + size/2, radius + 8 + pulse
+        );
+        auraGradient.addColorStop(0, 'rgba(255, 215, 0, 0.6)');
+        auraGradient.addColorStop(0.7, 'rgba(255, 215, 0, 0.3)');
+        auraGradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+        
+        ctx.fillStyle = auraGradient;
+        ctx.beginPath();
+        ctx.arc(pixelX + size/2, pixelY + size/2, radius + 8 + pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Ombre
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.beginPath();
+        ctx.arc(pixelX + size/2 + 2, pixelY + size/2 + 2, radius + pulse/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Corps principal - forme d'étoile/diamant
+        const centerX = pixelX + size/2;
+        const centerY = pixelY + size/2;
+        const starRadius = radius + pulse/2;
+        
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(pulseEffect / 4); // Rotation lente
+        
+        // Gradient doré
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, starRadius);
+        gradient.addColorStop(0, '#FFD700'); // Or brillant
+        gradient.addColorStop(0.6, '#FFA500'); // Orange
+        gradient.addColorStop(1, '#FF8C00'); // Orange foncé
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+            const angle = (i * Math.PI) / 4;
+            const r = i % 2 === 0 ? starRadius : starRadius * 0.6;
+            const x = Math.cos(angle) * r;
+            const y = Math.sin(angle) * r;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        
+        // Reflet central
+        const highlight = ctx.createRadialGradient(0, 0, 0, 0, 0, starRadius/2);
+        highlight.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        ctx.fillStyle = highlight;
+        ctx.beginPath();
+        ctx.arc(0, 0, starRadius/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+    function drawFood(x, y) {
+        const pixelX = x * gridSize;
+        const pixelY = y * gridSize;
+        const size = gridSize - 2;
+        const radius = size / 2;
+        
+        // Ombre
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.arc(pixelX + size/2 + 2, pixelY + size/2 + 2, radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Corps principal
+        const gradient = ctx.createRadialGradient(
+            pixelX + size/3, pixelY + size/3, 0,
+            pixelX + size/2, pixelY + size/2, radius
+        );
+        gradient.addColorStop(0, '#e74c3c');
+        gradient.addColorStop(1, '#c0392b');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(pixelX + size/2, pixelY + size/2, radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Reflet
+        const highlight = ctx.createRadialGradient(
+            pixelX + size/3, pixelY + size/3, 0,
+            pixelX + size/3, pixelY + size/3, radius/2
+        );
+        highlight.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+        highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        ctx.fillStyle = highlight;
+        ctx.beginPath();
+        ctx.arc(pixelX + size/2, pixelY + size/2, radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // CORRECTION : Fonction utilitaire plus robuste pour assombrir une couleur
+    function darkenColor(color, factor) {
+        let c = color.substring(1);      // Enlever le #
+        let num = parseInt(c, 16);
+        let r = Math.max(0, Math.floor((num >> 16) * (1 - factor)));
+        let g = Math.max(0, Math.floor(((num >> 8) & 0x00FF) * (1 - factor)));
+        let b = Math.max(0, Math.floor((num & 0x0000FF) * (1 - factor)));
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+    
+    // Fonction pour dessiner le fond texturé
+    function drawBackground() {
+        // Dégradé de base
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, '#0f2027');
+        gradient.addColorStop(0.5, '#203a43');
+        gradient.addColorStop(1, '#2c5364');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Grille subtile
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.lineWidth = 0.5;
+        
+        for (let x = 0; x <= canvas.width; x += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+        
+        for (let y = 0; y <= canvas.height; y += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+        
+        // Points lumineux aléatoires pour l'effet starfield
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        for (let i = 0; i < 30; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const size = Math.random() * 1.5 + 0.5;
+            
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Effet de vignette (assombrit les bords)
+        const vignetteGradient = ctx.createRadialGradient(
+            canvas.width/2, canvas.height/2, 0,
+            canvas.width/2, canvas.height/2, canvas.width/2
+        );
+        vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        vignetteGradient.addColorStop(0.7, 'rgba(0, 0, 0, 0)');
+        vignetteGradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
+        
+        ctx.fillStyle = vignetteGradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    function generateFood() {
+        food = {
+            x: Math.floor(Math.random() * tileCount),
+            y: Math.floor(Math.random() * tileCount)
+        };
+        
+        // Vérifier que la nourriture n'apparaît pas sur le serpent
+        for (let segment of snake) {
+            if (segment.x === food.x && segment.y === food.y) {
+                generateFood(); // Régénérer si collision
+                return;
+            }
+        }
+    }
+    
+    // Fonction pour dessiner tous les éléments du jeu
+    function draw() {
+        // Dessiner le fond texturé
+        drawBackground();
+        
+        // Dessiner le corps du serpent
+        for (let i = snake.length - 1; i > 0; i--) {
+            drawSnakeSegment(snake[i].x, snake[i].y, '#27ae60', false);
+        }
+        
+        // Dessiner la tête du serpent
+        if (snake.length > 0) {
+            drawSnakeSegment(snake[0].x, snake[0].y, '#2ecc71', true);
+        }
+        
+        // Dessiner la nourriture normale
+        drawFood(food.x, food.y);
+        
+        // Dessiner la nourriture bonus si elle existe
+        if (bonusFood) {
+            const pulseEffect = (Date.now() - bonusFoodTimer) / 100; // Animation de pulsation
+            drawBonusFood(bonusFood.x, bonusFood.y, pulseEffect);
+        }
+    }
+    
+    // Fonction pour déplacer le serpent
+    function moveSnake() {
+        if (!gameRunning) return;
+        
+        // Ne pas bouger si aucune direction n'est définie
+        if (dx === 0 && dy === 0) return;
+        
+        // Créer une nouvelle tête basée sur la direction
+        const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+        
+        // Vérifier les collisions avec les murs
+        if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+            gameOver();
+            return;
+        }
+        
+        // Vérifier les collisions avec le corps du serpent
+        for (let segment of snake) {
+            if (head.x === segment.x && head.y === segment.y) {
+                gameOver();
+                return;
+            }
+        }
+        
+        // Ajouter la nouvelle tête
+        snake.unshift(head);
+        
+        // Vérifier si le serpent a mangé la nourriture normale
+        if (head.x === food.x && head.y === food.y) {
+            score += 10;
+            scoreElement.textContent = score;
+            generateFood();
+        }
+        // Vérifier si le serpent a mangé la nourriture bonus
+        else if (bonusFood && head.x === bonusFood.x && head.y === bonusFood.y) {
+            score += 40;
+            scoreElement.textContent = score;
+            bonusFood = null; // Faire disparaître la nourriture bonus
+            // Ne pas enlever la queue car le serpent a mangé
+        }
+        else {
+            // Enlever la queue si aucune nourriture mangée
+            snake.pop();
+        }
+    }
+    
+    // Fonction appelée quand le jeu se termine
+    function gameOver() {
+        gameRunning = false;
+        gameOverElement.style.display = 'block';
+    }
+    
+    // Fonction pour redémarrer le jeu
+    function resetGame() {
+        snake = [{x: 10, y: 10}];
+        dx = 0;
+        dy = 0;
+        score = 0;
+        scoreElement.textContent = score;
+        gameRunning = true;
+        gameOverElement.style.display = 'none';
+        
+        // Réinitialiser la nourriture bonus
+        bonusFood = null;
+        bonusFoodTimer = 0;
+        nextBonusTime = Date.now() + Math.random() * 10000 + 5000;
+        
+        generateFood();
+    }
+
+    // AJOUT : La fonction manquante pour gérer la nourriture bonus
+    function updateBonusFood() {
+        if (!gameRunning) return;
+
+        const now = Date.now();
+
+        // Faire disparaître la nourriture bonus si elle est là depuis trop longtemps (ex: 7 secondes)
+        if (bonusFood && (now - bonusFoodTimer > 7000)) {
+            bonusFood = null;
+        }
+
+        // Faire apparaître une nouvelle nourriture bonus
+        if (!bonusFood && now > nextBonusTime) {
+            bonusFood = {
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount)
+            };
+            
+            // S'assurer qu'elle n'apparaît pas sur le serpent ou la nourriture normale
+            let onSnake = snake.some(segment => segment.x === bonusFood.x && segment.y === bonusFood.y);
+            let onFood = bonusFood.x === food.x && bonusFood.y === food.y;
+
+            if (onSnake || onFood) {
+                bonusFood = null; // Annuler l'apparition
+                nextBonusTime = now + 1000; // Tenter à nouveau dans 1 seconde
+            } else {
+                bonusFoodTimer = now; // Démarrer le chrono de la nourriture bonus
+                // Définir le temps pour la prochaine apparition
+                nextBonusTime = now + Math.random() * 10000 + 5000; // Prochaine dans 5-15s
+            }
+        }
+    }
+    
+    // ===== GESTION DES CONTRÔLES =====
+    document.addEventListener('keydown', function(e) {
+        if (!gameRunning && e.code === 'Space') {
+            resetGame();
+            return;
+        }
+        
+        if (!gameRunning) return;
+        
+        // Empêcher le serpent de faire demi-tour
+        switch(e.code) {
+            case 'ArrowUp':
+                if (dy !== 1) { dx = 0; dy = -1; }
+                break;
+            case 'ArrowDown':
+                if (dy !== -1) { dx = 0; dy = 1; }
+                break;
+            case 'ArrowLeft':
+                if (dx !== 1) { dx = -1; dy = 0; }
+                break;
+            case 'ArrowRight':
+                if (dx !== -1) { dx = 1; dy = 0; }
+                break;
+        }
+    });
+    
+    // ===== BOUCLE DE JEU PRINCIPALE =====
+    function gameLoop() {
+        updateBonusFood(); // Gérer l'apparition/disparition de la nourriture bonus
+        moveSnake();
+        draw();
+    }
+    
+    // ===== INITIALISATION =====
+    generateFood();
+    nextBonusTime = Date.now() + Math.random() * 10000 + 5000; // Premier bonus dans 5-15s
+    draw();
+    
+    // Démarrer la boucle de jeu (150ms = vitesse du jeu)
+    setInterval(gameLoop, 150);
+</script>
 </body>
 </html>
